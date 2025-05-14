@@ -4,6 +4,8 @@ import (
 	"log/slog"
 	"os"
 	"ulr_shortener/internal/config"
+	"ulr_shortener/internal/lib/logger/sl"
+	"ulr_shortener/internal/storage/sqlite"
 )
 
 const (
@@ -22,7 +24,12 @@ func main() {
 	log.Debug("debug message are enabled")
 
 	// TODO: init storage: sqlite
-
+	storage, err := sqlite.NewStorage(cfg.StoragePath)
+	if err != nil {
+		log.Error("filed to init storage", sl.Err(err))
+		os.Exit(1)
+	}
+	_ = storage
 	// TODO: init router:  chi "chi render"
 
 	// TODO: init server
