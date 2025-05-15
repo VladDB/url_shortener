@@ -5,7 +5,7 @@ import (
 	"os"
 	"ulr_shortener/internal/config"
 	"ulr_shortener/internal/lib/logger/sl"
-	"ulr_shortener/internal/storage/sqlite"
+	"ulr_shortener/internal/storage/postgres"
 )
 
 const (
@@ -24,7 +24,7 @@ func main() {
 	log.Debug("debug message are enabled")
 
 	// TODO: init storage: sqlite
-	storage, err := sqlite.NewStorage(cfg.StoragePath)
+	storage, err := postgres.NewStorage()
 	if err != nil {
 		log.Error("filed to init storage", sl.Err(err))
 		os.Exit(1)
