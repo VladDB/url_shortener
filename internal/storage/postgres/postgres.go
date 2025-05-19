@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"ulr_shortener/internal/storage"
+	"url_shortener/internal/storage"
 
 	"github.com/lib/pq"
 )

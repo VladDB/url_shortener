@@ -3,9 +3,14 @@ package main
 import (
 	"log/slog"
 	"os"
-	"ulr_shortener/internal/config"
-	"ulr_shortener/internal/lib/logger/sl"
-	"ulr_shortener/internal/storage/postgres"
+	"url_shortener/internal/config"
+	mwLogger "url_shortener/internal/http-server/middleware/logger"
+	"url_shortener/internal/lib/logger/handlers/slogpretty"
+	"url_shortener/internal/lib/logger/sl"
+	"url_shortener/internal/storage/postgres"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 const (
@@ -22,8 +27,9 @@ func main() {
 
 	log.Info("starting url-shortener", slog.String("env", cfg.Env))
 	log.Debug("debug message are enabled")
+	log.Error("error message are enabled")
 
-	// TODO: init storage: sqlite
+	// init storage
 	storage, err := postgres.NewStorage()
 	if err != nil {
 		log.Error("filed to init storage", sl.Err(err))
@@ -31,7 +37,15 @@ func main() {
 	}
 	_ = storage
 
-	// TODO: init router:  chi "chi render"
+	// init router:  chi "chi render"
+	router := chi.NewRouter()
+
+	// middleware
+	router.Use(middleware.RequestID)
+	router.Use(middleware.RealIP)
+	router.Use(mwLogger.New(log))
+	router.Use(middleware.Recoverer)
+	router.Use(middleware.URLFormat)
 
 	// TODO: init server
 }
@@ -40,7 +54,7 @@ func setupLogger(env string) *slog.Logger {
 	var log *slog.Logger
 	switch env {
 	case envLocal:
-		log = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+		log = setupPrettySLog()
 	case envDev:
 		log = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	case envProd:
@@ -48,4 +62,16 @@ func setupLogger(env string) *slog.Logger {
 	}
 
 	return log
+}
+
+func setupPrettySLog() *slog.Logger {
+	opts := slogpretty.PrettyHandlerOptions{
+		SlogOpts: &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		},
+	}
+
+	handler := opts.NewPrettyHandler(os.Stdout)
+
+	return slog.New(handler)
 }
